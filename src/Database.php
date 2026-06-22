@@ -1,4 +1,5 @@
 <?php
+
 namespace App;
 
 use PDO;
@@ -23,12 +24,22 @@ final class Database
             $_ENV['DB_CHARSET'] ?? 'utf8mb4'
         );
 
+        $options = [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+
+            // Enable SSL for TiDB Cloud
+            PDO::MYSQL_ATTR_SSL_CA       => __DIR__ . '/../certs/isrgrootx1.pem',
+        ];
+
         try {
-            self::$pdo = new PDO($dsn, $_ENV['DB_USER'] ?? 'root', $_ENV['DB_PASS'] ?? '', [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false, // Keeps native prepared statements secure
-            ]);
+            self::$pdo = new PDO(
+                $dsn,
+                $_ENV['DB_USER'] ?? 'root',
+                $_ENV['DB_PASS'] ?? '',
+                $options
+            );
         } catch (PDOException $e) {
             error_log('[DB] ' . $e->getMessage());
             throw new RuntimeException('Database connection failed', 500, $e);
@@ -37,4 +48,3 @@ final class Database
         return self::$pdo;
     }
 }
-?>
